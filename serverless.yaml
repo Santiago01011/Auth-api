@@ -1,0 +1,17 @@
+service: auth-api
+
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+
+plugins:
+  - serverless-offline
+
+functions:
+  register:
+    handler: app/api/register/route.POST
+    events:
+      - http:
+          path: api/register
+          method: post

@@ -8,10 +8,10 @@ if [ -f .env ]; then
 fi
 
 # Script to test the /api/register endpoint
-curl -X POST "$NEXT_PUBLIC_APP_URL/api/register" \
+curl -X POST "$NEXT_PUBLIC_APP_URL/dev/api/register" \
 -H "Content-Type: application/json" \
 -d '{
-  "email": "test.email",
+  "email": "test.email2",
   "password": "password",
   "username": "test_user",
   "redirectUrl": "'"$NEXT_PUBLIC_APP_URL/verify"'"
