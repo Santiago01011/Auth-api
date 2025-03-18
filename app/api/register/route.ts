@@ -6,25 +6,34 @@ import { sendVerificationEmail } from "../../lib/email"
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false,
-  },
+  ssl: false,
 })
+
+// Test database connection during initialization
+pool.connect()
+  .then(client => {
+    console.log("Database connection successful");
+    client.release();
+  })
+  .catch(err => {
+    console.error("Database connection error:", err.message);
+    // Log the error but do not stop the server
+  });
 
 export async function POST(request: Request) {
   try {
     console.log("Incoming request:", request);
 
-    const { email, password, fullName, redirectUrl } = await request.json();
-    console.log("Parsed body:", { email, password, fullName, redirectUrl });
-
+    const { email, password, username, redirectUrl } = await request.json();
+    console.log("Parsed body:", { email, password, username, redirectUrl });
+    console.log("Connecting to database with URL:", process.env.DATABASE_URL);
     // Validate input
-    if (!email || !password || !fullName) {
+    if (!email || !password || !username) {
       return NextResponse.json({ error: "Email, password, and full name are required" }, { status: 400 })
     }
 
     // Check if user already exists
-    const userCheck = await pool.query("SELECT * FROM users WHERE email = $1", [email])
+    const userCheck = await pool.query("SELECT * FROM todo.users WHERE email = $1", [email])
 
     if (userCheck.rows.length > 0) {
       return NextResponse.json({ error: "User with this email already exists" }, { status: 409 })
@@ -43,7 +52,7 @@ export async function POST(request: Request) {
     const result = await pool.query(
       `INSERT INTO users (email, password_hash, full_name, verification_token, verification_token_expires_at) 
        VALUES ($1, $2, $3, $4, $5) RETURNING user_id`,
-      [email, hashedPassword, fullName, verificationToken, tokenExpiry],
+      [email, hashedPassword, username, verificationToken, tokenExpiry],
     )
 
     const userId = result.rows[0].user_id
@@ -67,7 +76,11 @@ export async function POST(request: Request) {
       { status: 201 },
     )
   } catch (error) {
-    console.error("Registration error:", error)
+    if (error instanceof Error) {
+      console.error("Registration error:", error.message); // Log only the error message
+    } else {
+      console.error("Registration error:", error); // Log the entire error if it's not an instance of Error
+    }
     return NextResponse.json({ error: "An error occurred during registration" }, { status: 500 })
   }
 }

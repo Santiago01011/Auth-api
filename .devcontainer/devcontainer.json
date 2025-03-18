@@ -1,5 +1,7 @@
 {
 	"name": "Node.js & TypeScript",
 	"image": "mcr.microsoft.com/devcontainers/typescript-node:1-22-bookworm",
-	"postCreateCommand": "npm install"
+	"postCreateCommand": "npm install",
+	"forwardPorts": [5431],
+	"runArgs": ["--network", "todo_network"] // Connect to the same Docker network as the database
 }
