@@ -1,0 +1,27 @@
+{
+  "name": "node-typescript-project",
+  "version": "1.0.0",
+  "description": "A Node.js project using TypeScript",
+  "main": "src/app.ts",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/app.js",
+    "dev": "ts-node src/app.ts"
+  },
+  "dependencies": {
+    "@types/express": "^5.0.0",
+    "express": "^4.21.2"
+  },
+  "devDependencies": {
+    "@types/node": "^16.0.0",
+    "ts-node": "^10.0.0",
+    "typescript": "^4.5.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yourusername/node-typescript-project.git"
+  },
+  "keywords": [],
+  "author": "Your Name",
+  "license": "MIT"
+}
