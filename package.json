@@ -9,8 +9,19 @@
     "dev": "ts-node src/app.ts"
   },
   "dependencies": {
+    "@types/bcryptjs": "^2.4.2",
     "@types/express": "^5.0.0",
-    "express": "^4.21.2"
+    "@types/pg": "^8.6.6",
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^16.0.0",
+    "esm": "^3.2.25",
+    "express": "^4.21.2",
+    "next": "^14.0.0",
+    "node-fetch": "^2.7.0",
+    "pg": "^8.11.3",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "resend": "^2.0.0"
   },
   "devDependencies": {
     "@types/node": "^16.0.0",
