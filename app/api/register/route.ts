@@ -13,7 +13,10 @@ const pool = new Pool({
 
 export async function POST(request: Request) {
   try {
-    const { email, password, fullName, redirectUrl } = await request.json()
+    console.log("Incoming request:", request);
+
+    const { email, password, fullName, redirectUrl } = await request.json();
+    console.log("Parsed body:", { email, password, fullName, redirectUrl });
 
     // Validate input
     if (!email || !password || !fullName) {

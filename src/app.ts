@@ -11,16 +11,20 @@ app.get('/', (req, res) => {
 });
 
 app.post('/api/register', async (req, res) => {
-    const request = new Request('http://localhost:3000/api/register', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(req.body),
-    });
+    try {
+        // Call the registerUser function directly with the request body
+        const request = {
+            method: 'POST',
+            headers: req.headers,
+            body: JSON.stringify(req.body),
+        };
 
-    const response = await registerUser(request);
-    res.status(response.status).json(await response.json());
+        const response = await registerUser(request as any); // Adjust type if needed
+        res.status(response.status).json(await response.json());
+    } catch (error) {
+        console.error('Error in /api/register:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
 });
 
 app.listen(PORT, () => {
