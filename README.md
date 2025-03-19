@@ -8,18 +8,31 @@ This project is an authentication API built with Next.js, TypeScript, and Postgr
 auth-api
 ├── app
 │   ├── api
+│   │   ├── handleEmail
+│   │   │   ├── route.ts 
+│   │   ├── login
+│   │   │   ├── route.ts 
 │   │   ├── register
-│   │   │   └── route.ts    # API route for user registration
-│   │   └── verify
-│   │       └── route.ts    # API route for email verification
-│   ├── page.tsx            # Default Next.js page
+│   │   │   ├── route.ts   # API route for user registration
+│   │   ├── verify
+│   │   │   ├── route.ts   # API route for email verification
 ├── lib
-│   └── email.ts            # Email sending logic
-├── package.json            # NPM configuration file
-├── tsconfig.json           # TypeScript configuration file
-├── .env                    # Environment variables
-├── test_script.sh          # Script to test the /api/register endpoint
-└── README.md               # Project documentation
+│   ├── email.ts           # Email sending logic
+├── database_container
+├── scripts
+│   ├── db_url.sh
+│   ├── test_script.sh
+│   ├── test_verify.sh
+├── .devcontainer
+├── .github
+├── docker-compose.yml
+├── .gitignore
+├── README.md           
+├── next-env.d.ts
+├── package-lock.json
+├── package.json
+├── serverless.yaml
+
 ```
 
 ## Getting Started
