@@ -19,14 +19,13 @@ auth-api
 ├── lib
 │   ├── email.ts           # Email sending logic
 ├── database_container
+│   ├── docker-compose.yml  # Container to replicate the database
 ├── scripts
 │   ├── db_url.sh
 │   ├── test_script.sh
 │   ├── test_verify.sh
 ├── .devcontainer
-├── .github
 ├── docker-compose.yml
-├── .gitignore
 ├── README.md           
 ├── next-env.d.ts
 ├── package-lock.json
