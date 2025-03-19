@@ -4,10 +4,10 @@
 export $(grep -v '^#' .env | xargs)
 
 # Set the token
-TOKEN="22c91e29ded47aed9786"
+TOKEN="1238f9f0b69848165e77"
 
 # Construct the URL
-URL="${PUBLIC_APP_URL}/dev/api/verify?token=${TOKEN}"
+URL="${PUBLIC_APP_URL}/api/verify?token=${TOKEN}"
 
 # Test the endpoint
 echo "Testing verification endpoint: $URL"

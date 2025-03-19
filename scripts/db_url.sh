@@ -25,6 +25,7 @@ DATABASE_HOST_PORT=${NGROK_URL#tcp://}
 if [ -f .env ]; then
   sed -i "s|^DATABASE_URL=.*|DATABASE_URL=postgresql://$DB_USER:$DB_PASSWORD@$DATABASE_HOST_PORT/$DB_NAME|" .env
   echo "Updated .env file with new ngrok URL."
+  echo $DATABASE_URL
 else
   echo ".env file not found. Create it first."
   exit 1
