@@ -1,7 +1,12 @@
 {
 	"name": "Node.js & TypeScript",
 	"image": "mcr.microsoft.com/devcontainers/typescript-node:1-22-bookworm",
-	"postCreateCommand": "npm install",
+	"postCreateCommand": "npm install && npm install -g serverless",
 	"forwardPorts": [5431],
-	"runArgs": ["--network", "todo_network"] // Connect to the same Docker network as the database
+	"runArgs": ["--network", "todo_network"],
+	"customizations": {
+		"vscode": {
+			"extensions": ["ms-azuretools.vscode-docker"]
+		}
+	}
 }

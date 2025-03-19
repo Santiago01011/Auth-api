@@ -1,9 +1,12 @@
 service: auth-api
 
-
 provider:
   name: aws
   runtime: nodejs18.x
+  environment:
+    DATABASE_URL: ${env:DATABASE_URL}
+    RESEND_API_KEY: ${env:RESEND_API_KEY}
+    PUBLIC_APP_URL: ${env:PUBLIC_APP_URL}
 
 plugins:
   - serverless-offline
@@ -15,3 +18,10 @@ functions:
       - http:
           path: api/register
           method: post
+
+  verify:
+    handler: app/api/verify/route.GET
+    events:
+      - http:
+          path: api/verify
+          method: get

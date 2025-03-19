@@ -1,68 +1,71 @@
-import { NextResponse } from "next/server"
-import { Pool } from "pg"
+import { Pool } from "pg";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false,
-  },
-})
+  ssl: false,
+});
 
-export async function GET(request: Request) {
+export async function GET(event: { queryStringParameters: { token: string } }) {
   try {
-    const { searchParams } = new URL(request.url)
-    const token = searchParams.get("token")
+    const { token } = event.queryStringParameters;
 
     if (!token) {
-      return NextResponse.json({ error: "Verification token is required" }, { status: 400 })
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: "Verification token is required." }),
+      };
     }
 
-    // Verify the token
-    const currentDate = new Date()
+    console.log("Verifying token:", token);
+
+    // Check if the token exists and is valid
     const result = await pool.query(
-      `UPDATE users 
-       SET is_verified = TRUE, verification_token = NULL, verification_token_expires_at = NULL 
-       WHERE verification_token = $1 
-       AND verification_token_expires_at > $2 
-       AND is_verified = FALSE
-       RETURNING user_id, email`,
-      [token, currentDate],
-    )
+      `
+      SELECT pending_id, email, username FROM todo.pending_users
+      WHERE verification_code = $1
+      `,
+      [token]
+    );
 
     if (result.rows.length === 0) {
-      return NextResponse.json({ error: "Invalid or expired verification token" }, { status: 400 })
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: "Invalid or expired verification token." }),
+      };
     }
 
-    // Check if there's a redirect URL associated with this token
-    const redirectResult = await pool.query(`SELECT redirect_url FROM verification_redirects WHERE token = $1`, [token])
+    const { pending_id, email, username } = result.rows[0];
 
-    // Delete the redirect entry
-    if (redirectResult.rows.length > 0) {
-      await pool.query(`DELETE FROM verification_redirects WHERE token = $1`, [token])
-
-      const redirectUrl = redirectResult.rows[0].redirect_url
-
-      // If there's a custom protocol for the Java app, redirect to it
-      if (redirectUrl.startsWith("todoapp://") || redirectUrl.includes("://")) {
-        return NextResponse.redirect(redirectUrl)
-      }
-
-      // Otherwise, return success with the redirect URL
-      return NextResponse.json({
-        success: true,
-        message: "Email verified successfully. You can now log in.",
-        redirectUrl,
-      })
+    // Move the user from pending_users to users
+    try {
+      await pool.query(
+        `
+        INSERT INTO todo.users (user_id, email, username, password_hash, created_at)
+        SELECT todo.uuid_generate_v7(), email, username, password_hash, NOW()
+        FROM todo.pending_users
+        WHERE pending_id = $1
+        `,
+        [pending_id]
+      );
+    } catch (error) {
+      console.error("Error moving user to users table:", error.stack || error.message);
+      throw new Error("Failed to verify user.");
     }
 
-    // Default success response
-    return NextResponse.json({
-      success: true,
-      message: "Email verified successfully. You can now log in.",
-    })
+    // Delete the user from pending_users
+    await pool.query("DELETE FROM todo.pending_users WHERE pending_id = $1", [pending_id]);
+
+    console.log("User verified successfully:", email);
+
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ success: true, message: "Email verified successfully." }),
+    };
   } catch (error) {
-    console.error("Verification error:", error)
-    return NextResponse.json({ error: "An error occurred during verification" }, { status: 500 })
+    console.error("Verification error:", error.stack || error.message);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: "An error occurred during verification." }),
+    };
   }
 }
-

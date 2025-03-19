@@ -1,67 +1,79 @@
-import { NextResponse } from "next/server"
-import { Pool } from "pg"
-import bcrypt from "bcryptjs"
-import { randomBytes } from "crypto"
-import { sendVerificationEmail } from "../../lib/email"
+import { Pool } from "pg";
+import { handleEmailVerification } from "../handleEmail/route";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: false,
-})
+});
 
-export async function POST(request: Request) {
+export async function POST(event: { body: string }) {
   try {
-    // Extract the body from the request
-    const body = JSON.parse(request.body || "{}"); // Use request.body for serverless-offline
+    console.log("Database URL:", process.env.DATABASE_URL);
+    console.log("Request body:", event.body);
 
-    const { email, password, username } = body;
+    const body = JSON.parse(event.body);
+    const { email, password, username, redirectUrl } = body;
 
-    // Validate input
     if (!email || !password || !username) {
-      return NextResponse.json({ error: "Email, password, and full name are required" }, { status: 400 });
+      return {
+        statusCode: 400,
+        body: JSON.stringify({
+          error: "Email, password, and username are required",
+        }),
+      };
     }
 
-    // Check if email or username already exists
+    console.log("Checking if user exists...");
     const userCheck = await pool.query(
-      "SELECT * FROM todo.users WHERE email = $1 OR username = $2",
+      `
+      SELECT 'users' AS source, email, username FROM todo.users WHERE email = $1 OR username = $2
+      UNION
+      SELECT 'pending_users' AS source, email, username FROM todo.pending_users WHERE email = $1
+      `,
       [email, username]
     );
-
     if (userCheck.rows.length > 0) {
       const existingField = userCheck.rows[0].email === email ? "email" : "username";
       const existingValue = userCheck.rows[0][existingField];
-      return NextResponse.json(
-        { error: `${existingField}: ${existingValue} already exists, try login` },
-        { status: 409 }
-      );
+      const source = userCheck.rows[0].source;
+      const message =
+        source === "users"
+          ? `${existingField}: ${existingValue} already exists, try login.`
+          : `${existingField}: ${existingValue} is already pending verification. Please check your email.`;
+      return {
+        statusCode: 409,
+        body: JSON.stringify({
+          error: message,
+        }),
+      };
     }
-
-    // Hash password
-    const salt = await bcrypt.genSalt();
-    const hashedPassword = await bcrypt.hash(password, salt);
-
-    // Generate verification token
-    const verificationToken = randomBytes(32).toString("hex");
-    const tokenExpiry = new Date();
-    tokenExpiry.setDate(tokenExpiry.getDate() + 1); // Token expires in 24 hours
-
-    // Send verification email
-    // await sendVerificationEmail(email, verificationToken);
-
-    return NextResponse.json(
-      {
+    // Return early to the client
+    console.log("Returning success response to client...");
+    const response = {
+      statusCode: 201,
+      body: JSON.stringify({
         success: true,
         message: "Registration initiated. Please check your email for verification.",
-      },
-      { status: 201 }
-    );
+      }),
+    };
+
+    // Handle email verification asynchronously
+    handleEmailVerification(email, username, password, pool).catch((error) => {
+      console.error("Error in asynchronous email verification process:", error);
+    });
+
+    return response;
   } catch (error) {
     if (error instanceof Error) {
-      console.error("Registration error:", error.message); // Log only the error message
+      console.error("Registration error:", error.stack || error.message);
     } else {
-      console.error("Registration error:", error); // Log the entire error if it's not an instance of Error
+      console.error("Registration error:", error);
     }
-    return NextResponse.json({ error: "An error occurred during registration" }, { status: 500 });
+    return {
+      statusCode: 500,
+      body: JSON.stringify({
+        error: "An error occurred during registration",
+      }),
+    };
   }
 }
-
