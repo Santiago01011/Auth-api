@@ -1,10 +1,5 @@
-import { Pool } from "pg";
+import pool from "../../lib/db";
 import { handleEmailVerification } from "../handleEmail/route";
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: false,
-});
 
 export async function POST(event: { body: string }) {
   try {
@@ -53,7 +48,7 @@ export async function POST(event: { body: string }) {
       statusCode: 201,
       body: JSON.stringify({
         success: true,
-        message: "Registration initiated. Please check your email for verification.",
+        message: "Registration received. Verification email will be sent shortly.",
       }),
     };
 
@@ -71,9 +66,7 @@ export async function POST(event: { body: string }) {
     }
     return {
       statusCode: 500,
-      body: JSON.stringify({
-        error: "An error occurred during registration",
-      }),
+      body: JSON.stringify({ error: "An unexpected error occurred during registration" }),
     };
   }
 }

@@ -5,67 +5,68 @@ const pool = new Pool({
   ssl: false,
 });
 
-export async function GET(event: { queryStringParameters: { token: string } }) {
-  try {
-    const { token } = event.queryStringParameters;
+export async function handler(event: { queryStringParameters: { token: string }; headers: Record<string, string> }) {
 
-    if (!token) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: "Verification token is required." }),
-      };
-    }
+  console.log("Headers received:", event.headers);
+  //console.log("Request received from:", event.requestContext.identity.sourceIp);
 
-    console.log("Verifying token:", token);
+  const { token } = event.queryStringParameters;
+  const client = await pool.connect();
+  if (!token) {
+    return {
+      statusCode: 400,
+      body: JSON.stringify({ error: "Verification token is required." }),
+    };
+  }
 
-    // Check if the token exists and is valid
-    const result = await pool.query(
-      `
-      SELECT pending_id, email, username FROM todo.pending_users
+  console.log("Verifying token:", token);
+
+  try{
+    await client.query("BEGIN");
+
+    // Fetch and delete in a single step
+    const result = await client.query(
+      `DELETE FROM todo.pending_users
       WHERE verification_code = $1
-      `,
+      AND created_at >= NOW() - INTERVAL '15 minutes'
+      RETURNING email, username, password_hash;`,
       [token]
     );
 
     if (result.rows.length === 0) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: "Invalid or expired verification token." }),
-      };
+      throw new Error("Invalid or expired verification token.");
     }
 
-    const { pending_id, email, username } = result.rows[0];
+    const { email, username, password_hash } = result.rows[0];
+    const insertResult = await client.query(
+      `INSERT INTO todo.users (user_id, email, username, password_hash, created_at)
+      VALUES (todo.uuid_generate_v7(), $1, $2, $3, NOW())
+      ON CONFLICT (email, username) DO NOTHING
+      RETURNING user_id;`,
+      [email, username, password_hash]
+    );
 
-    // Move the user from pending_users to users
-    try {
-      await pool.query(
-        `
-        INSERT INTO todo.users (user_id, email, username, password_hash, created_at)
-        SELECT todo.uuid_generate_v7(), email, username, password_hash, NOW()
-        FROM todo.pending_users
-        WHERE pending_id = $1
-        `,
-        [pending_id]
-      );
-    } catch (error) {
-      console.error("Error moving user to users table:", error.stack || error.message);
-      throw new Error("Failed to verify user.");
+    if (insertResult.rows.length === 0) {
+      throw new Error("User is already verified.");
     }
 
-    // Delete the user from pending_users
-    await pool.query("DELETE FROM todo.pending_users WHERE pending_id = $1", [pending_id]);
-
+    await client.query("COMMIT");
     console.log("User verified successfully:", email);
-
     return {
       statusCode: 200,
-      body: JSON.stringify({ success: true, message: "Email verified successfully." }),
+      headers: { "Content-Type": "text/html" },
+      body: `<h1>Email Verified</h1><p>You can now <a href='/login'>log in</a>.</p>`,
     };
   } catch (error) {
-    console.error("Verification error:", error.stack || error.message);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: "An error occurred during verification." }),
-    };
+      await client.query("ROLLBACK");
+      console.error("Verification error:", error.message);
+      return {
+        statusCode: error.message === "Invalid or expired verification token."
+          ? 400
+          : 500,
+        body: JSON.stringify({ error: error.message || "An unexpected error occurred during verification." }),
+      };
+  } finally {
+    client.release();
   }
 }

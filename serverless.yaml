@@ -20,8 +20,9 @@ functions:
           method: post
 
   verify:
-    handler: app/api/verify/route.GET
+    handler: app/api/verify/route.handler
     events:
       - http:
           path: api/verify
           method: get
+          cors: true

@@ -17,7 +17,7 @@ export async function handleEmailVerification(
     console.log("Generating verification token...");
     const verificationToken = randomBytes(10).toString("hex");
     const tokenExpiry = new Date();
-    tokenExpiry.setDate(tokenExpiry.getDate() + 1);
+    tokenExpiry.setMinutes(tokenExpiry.getMinutes() + 15);
 
     console.log("Sending verification email...");
     await sendVerificationEmail(email, verificationToken);
