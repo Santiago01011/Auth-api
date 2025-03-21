@@ -4,7 +4,7 @@
 export $(grep -v '^#' .env | xargs)
 
 # Set the token
-TOKEN="87d3cf1bb329141157b1"
+TOKEN="4e89c183a7aa2f50c894"
 
 # Construct the URL
 URL="${PUBLIC_APP_URL}/api/verify?token=${TOKEN}"

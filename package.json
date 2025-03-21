@@ -13,6 +13,7 @@
     "@types/express": "^5.0.0",
     "@types/pg": "^8.6.6",
     "bcryptjs": "^2.4.3",
+    "crypto": "^1.0.1",
     "dotenv": "^16.0.0",
     "esm": "^3.2.25",
     "express": "^4.21.2",
@@ -24,7 +25,7 @@
     "resend": "^2.0.0"
   },
   "devDependencies": {
-    "@types/node": "^16.0.0",
+    "@types/node": "^16.18.126",
     "@types/react": "19.0.11",
     "serverless-offline": "^14.4.0",
     "ts-node": "^10.0.0",
@@ -32,9 +33,9 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/yourusername/node-typescript-project.git"
+    "url": "https://github.com/Santiago01011/Auth-api.git"
   },
   "keywords": [],
-  "author": "Your Name",
+  "author": "Santiago",
   "license": "MIT"
 }

@@ -1,71 +1,49 @@
-import { NextResponse } from "next/server"
-import { Pool } from "pg"
+import pool from "../../lib/db"
 import bcrypt from "bcryptjs"
-import { randomUUID } from "crypto"
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false,
-  },
-})
-
-export async function POST(request: Request) {
+export async function POST(event: { body: string }) {
+  const client = await pool.connect();
   try {
-    const { email, password } = await request.json()
-
-    // Validate input
-    if (!email || !password) {
-      return NextResponse.json({ error: "Email and password are required" }, { status: 400 })
+    const body = JSON.parse(event.body);
+    const { username, email, password } = body;
+    if( (!email && !username) || !password ) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: "Email or username and password are required" }),
+      }
     }
-
-    // Get user from database
-    const result = await pool.query(
-      "SELECT user_id, email, password_hash, full_name, is_verified FROM users WHERE email = $1",
-      [email],
-    )
+    const result = await client.query(
+      `SELECT user_id, password_hash FROM todo.users WHERE email = $1 OR username = $2;`,
+      [email, username]
+    );
 
     if (result.rows.length === 0) {
-      return NextResponse.json({ error: "Invalid email or password" }, { status: 401 })
+      return { statusCode: 401, body: JSON.stringify({ error: "Invalid credentials" }) };
     }
-
-    const user = result.rows[0]
-
-    // Check if user is verified
-    if (!user.is_verified) {
-      return NextResponse.json({ error: "Please verify your email before logging in" }, { status: 403 })
+    const password_hash = result.rows[0].password_hash;
+    const valid = await bcrypt.compare(password + process.env.PEPPER_SECRET!, password_hash);
+    if (!valid) {
+      return {
+        statusCode: 401,
+        body: JSON.stringify({ error: "Invalid credentials" }),
+      }
     }
-
-    // Check password
-    const isPasswordValid = await bcrypt.compare(password, user.password_hash)
-    if (!isPasswordValid) {
-      return NextResponse.json({ error: "Invalid email or password" }, { status: 401 })
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ message: "Login successful", user_id: result.rows[0].user_id })
     }
-
-    // Generate a session token
-    const sessionToken = randomUUID()
-    const expiresAt = new Date()
-    expiresAt.setDate(expiresAt.getDate() + 30) // Session expires in 30 days
-
-    // Store session in database
-    await pool.query(`INSERT INTO user_sessions (user_id, session_token, expires_at) VALUES ($1, $2, $3)`, [
-      user.user_id,
-      sessionToken,
-      expiresAt,
-    ])
-
-    return NextResponse.json({
-      success: true,
-      sessionToken,
-      user: {
-        userId: user.user_id,
-        email: user.email,
-        fullName: user.full_name,
-      },
-    })
   } catch (error) {
-    console.error("Login error:", error)
-    return NextResponse.json({ error: "An error occurred during login" }, { status: 500 })
+    if (error instanceof Error) {
+      console.error("Login error:", error.stack || error.message)
+    } else {
+      console.error("Login error:", error)
+    }
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: "An unexpected error occurred during login" }),
+    }
+  } finally {
+    client.release()
   }
 }
 

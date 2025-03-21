@@ -7,6 +7,7 @@ provider:
     DATABASE_URL: ${env:DATABASE_URL}
     RESEND_API_KEY: ${env:RESEND_API_KEY}
     PUBLIC_APP_URL: ${env:PUBLIC_APP_URL}
+    PEPPER_SECRET: ${env:PEPPER_SECRET}
 
 plugins:
   - serverless-offline
@@ -26,3 +27,10 @@ functions:
           path: api/verify
           method: get
           cors: true
+  
+  login:
+    handler: app/api/login/route.POST
+    events:
+      - http:
+          path: api/login
+          method: post
