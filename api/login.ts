@@ -24,7 +24,7 @@ export default async function handler(req, res) {
     }
 
     const password_hash = result.rows[0].password_hash
-    const valid = await bcrypt.compare(password + process.env.PEPPER_SECRET!, password_hash)
+    const valid = await bcrypt.compare(password + process.env.PEPPER_SECRET, password_hash)
 
     if (!valid) {
       return res.status(401).json({ error: "Invalid credentials" })
@@ -32,14 +32,10 @@ export default async function handler(req, res) {
 
     return res.status(200).json({ message: "Login successful", user_id: result.rows[0].user_id })
   } catch (error) {
-    if (error instanceof Error) {
-      console.error("Login error:", error.stack || error.message)
-    } else {
-      console.error("Login error:", error)
-    }
-
+    console.error("Login error:", error)
     return res.status(500).json({ error: "An unexpected error occurred during login" })
   } finally {
     client.release()
   }
 }
+

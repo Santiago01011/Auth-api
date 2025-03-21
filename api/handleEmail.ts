@@ -1,8 +1,7 @@
-import type { Pool } from "pg"
-import bcrypt from "bcryptjs"
 import { randomBytes } from "crypto"
+import bcrypt from "bcryptjs"
 
-export async function handleEmailVerification(email: string, username: string, password: string, pool: Pool) {
+export async function handleEmailVerification(email, username, password, pool) {
   try {
     const pepper = process.env.PEPPER_SECRET
     if (!pepper) {

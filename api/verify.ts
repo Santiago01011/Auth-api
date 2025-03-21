@@ -45,9 +45,10 @@ export default async function handler(req, res) {
     await client.query("ROLLBACK")
     console.error("Verification error:", error.message)
 
-    return res
-      .status(error.message === "Invalid or expired verification token." ? 400 : 500)
-      .json({ error: error.message || "An unexpected error occurred during verification." })
+    const status = error.message === "Invalid or expired verification token." ? 400 : 500
+    return res.status(status).json({
+      error: error.message || "An unexpected error occurred during verification.",
+    })
   } finally {
     client.release()
   }

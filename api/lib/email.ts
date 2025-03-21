@@ -1,9 +1,8 @@
-import { Resend } from "resend";
+import { Resend } from "resend"
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = new Resend(process.env.RESEND_API_KEY)
 
-export async function sendVerificationEmail(email: string, token: string) {
-
+export async function sendVerificationEmail(email, token) {
   try {
     const { data, error } = await resend.emails.send({
       from: "onboarding@resend.dev",
@@ -20,11 +19,11 @@ export async function sendVerificationEmail(email: string, token: string) {
           <p style="font-size: 12px; color: #999;">- The Todo App Team</p>
         </div>
       `,
-    });
-    return data;
+    })
+    return data
   } catch (error) {
-    console.error("Error sending email:", error);
-    throw new Error("Failed to send verification email");
+    console.error("Error sending email:", error)
+    throw new Error("Failed to send verification email")
   }
 }
 

@@ -1,25 +1,16 @@
 {
-    "version": 2,
-    "functions": {
-      "api/*.ts": {
-        "memory": 1024,
-        "maxDuration": 10
-      }
-    },
-    "routes": [
-      {
-        "src": "/api/register",
-        "dest": "/api/register.ts"
-      },
-      {
-        "src": "/api/login",
-        "dest": "/api/login.ts"
-      },
-      {
-        "src": "/api/verify",
-        "dest": "/api/verify.ts"
-      }
-    ]
-  }
-  
-  
+  "version": 2,
+  "functions": {
+    "api/*.ts": {
+      "memory": 1024,
+      "maxDuration": 10
+    }
+  },
+  "builds": [{ "src": "api/*.js", "use": "@vercel/node" }],
+  "routes": [
+    { "src": "/api/register", "dest": "/api/register.js" },
+    { "src": "/api/login", "dest": "/api/login.js" },
+    { "src": "/api/verify", "dest": "/api/verify.js" }
+  ]
+}
+
