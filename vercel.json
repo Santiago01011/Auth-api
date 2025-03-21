@@ -1,12 +1,12 @@
 {
   "version": 2,
   "functions": {
-    "api/*.js": {
+    "api/*.ts": {
+      "runtime": "@vercel/node",
       "memory": 1024,
       "maxDuration": 10
     }
   },
-  "builds": [{ "src": "api/*.ts", "use": "@vercel/node" }],
   "routes": [
     { "src": "/api/register", "dest": "/api/register.ts" },
     { "src": "/api/login", "dest": "/api/login.ts" },
