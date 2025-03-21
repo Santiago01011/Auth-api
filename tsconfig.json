@@ -28,7 +28,7 @@
   },
   "include": [
     "src/**/*",
-    "app/lib",
+    "api/lib",
     ".next/types/**/*.ts"
   ],
   "exclude": [
